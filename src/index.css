@@ -1,0 +1,346 @@
+:root {
+  /* --- PALETA DE COLORES (DEEP NAVY / MIDNIGHT BLUE) --- */
+
+  /* Sidebar & Brand - The Darkest Blue */
+  --color-sidebar: #020617;
+  /* Slate-950: Azul casi negro, muy profundo */
+  --color-sidebar-active: #1E293B;
+  /* Slate-800: Azul oscuro para selección */
+  --color-sidebar-text: #F8FAFC;
+  /* Slate-50: Blanco azulado */
+
+  /* Backgrounds */
+  --bg-body: #0F172A;
+  /* Slate-900: Azul noche profundo */
+  --bg-surface: #1E293B;
+  /* Slate-800: Azul oscuro para tarjetas */
+  --bg-card-action: #334155;
+  /* Slate-700: Azul grisáceo para botones de acción */
+
+  /* Text */
+  --text-main: #F1F5F9;
+  /* Slate-100: Blanco hielo */
+  --text-secondary: #94A3B8;
+  /* Slate-400: Azul grisáceo claro */
+  --text-inverse: #020617;
+  /* Texto oscuro sobre fondos claros */
+
+  /* Accents */
+  --color-accent: #38BDF8;
+  /* Sky-400: Azul cielo brillante para detalles */
+  --color-primary: #60A5FA;
+  /* Blue-400: Azul real suave */
+
+  /* Borders */
+  --border-light: #334155;
+  /* Slate-700: Bordes azules sutiles */
+
+  /* Áreas Ministeriales (Adaptadas a Dark Blue Theme) */
+  --color-ministerial: #2DD4BF;
+  /* Teal (mantenemos para contraste) */
+  --color-operacional: #F472B6;
+  /* Pink/Rose para contraste vibrante contra azul */
+
+  /* Colores de Recursos (Checkboxes) */
+  --color-ops-produccion: #F87171;
+  --color-ops-comunicacion: #60A5FA;
+  --color-ops-logistica: #FBBF24;
+  --color-ops-tecnologia: #A78BFA;
+
+  /* --- TIPOGRAFÍA --- */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* --- ESPACIADO --- */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* --- SOMBRAS (Azuladas para integrar mejor) --- */
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  color: var(--text-main);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Form Elements Global Styles */
+input,
+select,
+textarea {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  border: 1px solid var(--border-light);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+/* Checkbox specific override */
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+}
+
+.container {
+  max-width: 1400px;
+  /* Más ancho para dashboard */
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.card {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+}
+
+/* Action Card Style (como los botones grandes de la imagen) */
+.action-card {
+  background-color: var(--bg-card-action);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  background-color: var(--color-sidebar-active);
+}
+
+.action-card h3 {
+  color: white;
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.action-card p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.btn-icon {
+  background-color: transparent;
+  color: var(--text-main);
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background-color: var(--bg-body);
+  border-color: var(--border-light);
+  color: var(--color-primary);
+}
+
+/* Calendar Responsive Styles */
+.calendar-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: var(--border-light);
+  border: 1px solid var(--border-light);
+  min-width: 600px;
+  /* Reduced min-width */
+}
+
+@media (max-width: 768px) {
+  .calendar-grid {
+    min-width: 100%;
+    /* Fit to screen width */
+    display: grid;
+  }
+
+  .calendar-day {
+    min-height: 60px !important;
+    /* Smaller height */
+    padding: 2px !important;
+    /* Minimal padding */
+  }
+
+  .calendar-header-text {
+    font-size: 0.7rem !important;
+    padding: 0.25rem !important;
+  }
+
+  /* Make event text smaller on mobile */
+  .calendar-day div[title] {
+    font-size: 0.6rem !important;
+    padding: 2px !important;
+    white-space: normal !important;
+    /* Allow wrapping */
+    line-height: 1 !important;
+  }
+}
+
+/* Visibility Utilities */
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+}
+
+/* Mobile Calendar List Styles */
+.mobile-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-day-row {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-day-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.mobile-day-number {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+}
+
+.mobile-event-item {
+  background-color: var(--color-sidebar);
+  color: white;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  /* Large readable text */
+  margin-bottom: 0.25rem;
+}
+
+/* Layout Responsiveness */
+.desktop-sidebar {
+  display: none !important;
+  /* Default to hidden on mobile */
+  flex-direction: column;
+  padding: 1.5rem;
+  width: 260px;
+  background-color: var(--color-sidebar);
+  color: var(--color-sidebar-text);
+}
+
+.mobile-header {
+  display: flex !important;
+  /* Default to visible on mobile */
+}
+
+@media (min-width: 768px) {
+  .desktop-sidebar {
+    display: flex !important;
+  }
+
+  .mobile-header {
+    display: none !important;
+  }
+}

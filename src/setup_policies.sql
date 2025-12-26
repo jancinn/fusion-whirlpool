@@ -1,26 +1,34 @@
--- Habilitar RLS (Seguridad a Nivel de Fila) en la tabla solicitudes
+-- Habilitar RLS
 ALTER TABLE solicitudes ENABLE ROW LEVEL SECURITY;
 
--- 1. PERMITIR CREAR (INSERT)
--- Cualquier usuario autenticado puede crear una solicitud.
+-- Eliminar políticas previas si existen
+DROP POLICY IF EXISTS "Usuarios autenticados pueden crear solicitudes" ON solicitudes;
+DROP POLICY IF EXISTS "Politica de Visibilidad de Solicitudes" ON solicitudes;
+DROP POLICY IF EXISTS "Politica de Edicion de Solicitudes" ON solicitudes;
+
+-- 1. INSERT — cualquier usuario autenticado puede crear solicitudes
+-- (incluyendo coordinadores enviando por otros)
 CREATE POLICY "Usuarios autenticados pueden crear solicitudes"
-ON solicitudes FOR INSERT
-TO authenticated
-WITH CHECK (auth.uid() = user_id);
+ON solicitudes FOR INSERT TO authenticated
+WITH CHECK (true);
 
--- 2. PERMITIR VER (SELECT)
--- Por ahora, para que puedas probar el sistema de Aprobaciones,
--- permitiremos que cualquier usuario autenticado vea TODAS las solicitudes.
--- (Más adelante restringiremos esto solo a Admins)
-CREATE POLICY "Usuarios autenticados pueden ver todas las solicitudes"
-ON solicitudes FOR SELECT
-TO authenticated
-USING (true);
+-- 2. SELECT — el dueño ve las suyas; admin y coordinadores ven todas
+CREATE POLICY "Politica de Visibilidad de Solicitudes"
+ON solicitudes FOR SELECT TO authenticated
+USING (
+  (auth.uid() = user_id)
+  OR ((auth.jwt() -> 'user_metadata' ->> 'role')
+      IN ('admin','coordinador','coordinador_operativo'))
+);
 
--- 3. PERMITIR ACTUALIZAR (UPDATE)
--- Necesario para que puedas Aprobar/Rechazar (cambiar el status).
--- También abierto a autenticados por ahora para pruebas.
-CREATE POLICY "Usuarios autenticados pueden actualizar solicitudes"
-ON solicitudes FOR UPDATE
-TO authenticated
-USING (true);
+-- 3. UPDATE — solo Admin / Coordinador / Coordinador Operativo pueden editar
+CREATE POLICY "Politica de Edicion de Solicitudes"
+ON solicitudes FOR UPDATE TO authenticated
+USING (
+  (auth.jwt() -> 'user_metadata' ->> 'role')
+  IN ('admin','coordinador','coordinador_operativo')
+)
+WITH CHECK (
+  (auth.jwt() -> 'user_metadata' ->> 'role')
+  IN ('admin','coordinador','coordinador_operativo')
+);

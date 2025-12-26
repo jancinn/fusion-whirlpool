@@ -76,51 +76,58 @@ export default function MeetingMinutes() {
         setNewItems(prev => prev.filter(item => item.id !== id));
     };
 
-    const finalizeMeeting = async () => {
-        if (!window.confirm("¿Estás seguro de cerrar el Acta de la Junta? Esto generará las órdenes de ejecución.")) return;
+    const saveMeeting = async (status = 'borrador') => {
+        const actionName = status === 'borrador' ? 'Guardar Borrador' : 'Cerrar Acta';
+        if (!window.confirm(`¿Estás seguro de ${actionName}?`)) return;
 
         setProcessing(true);
         try {
-            // 1. Process Agenda Items (Update status)
+            // 1. Prepare Snapshot (Frozen state of approved items)
             const approvedItems = agendaItems.filter(i => i.decision === 'approved');
             const rejectedItems = agendaItems.filter(i => i.decision === 'rejected');
 
-            // Update Approved
-            for (const item of approvedItems) {
-                await supabase.from('solicitudes').update({ status: 'aprobado' }).eq('id', item.id);
-            }
-            // Update Rejected
-            for (const item of rejectedItems) {
-                await supabase.from('solicitudes').update({ status: 'rechazado' }).eq('id', item.id);
+            // Snapshot includes full details of approved items for history
+            const snapshot = approvedItems.map(item => ({
+                id: item.id,
+                activity: item.activity_type,
+                area: item.area,
+                date: item.event_date,
+                description: item.description,
+                decision: 'aprobado'
+            }));
+
+            // 2. Insert into 'actas' table
+            const { error: insertError } = await supabase.from('actas').insert([{
+                fecha_reunion: new Date().toISOString().split('T')[0],
+                tipo_reunion: 'Junta de Coordinación', // Could be dynamic
+                estado: status, // 'borrador' or 'cerrada'
+                asistentes: [], // Should be captured via UI input in a real scenario
+                snapshot_solicitudes: snapshot,
+                creado_por: user.id
+            }]);
+
+            if (insertError) throw insertError;
+
+            // 3. Update Status of Solicitudes (Only if closing)
+            if (status === 'cerrada') {
+                for (const item of approvedItems) {
+                    await supabase.from('solicitudes').update({ status: 'aprobado' }).eq('id', item.id);
+                }
+                for (const item of rejectedItems) {
+                    await supabase.from('solicitudes').update({ status: 'rechazado' }).eq('id', item.id);
+                }
             }
 
-            // 2. Insert New Items (Quick Agreements)
-            if (newItems.length > 0) {
-                const cleanItems = newItems.map(item => ({
-                    user_id: user.id,
-                    area: item.area,
-                    activity_type: item.activity_type,
-                    description: item.description,
-                    event_date: item.event_date,
-                    event_time: '09:00', // Default
-                    status: 'aprobado', // Ready for execution
-                    attendees: 0,
-                    resources: { origin: 'junta_emergencia' }
-                }));
+            alert(`¡Acta ${status === 'cerrada' ? 'cerrada' : 'guardada'} con éxito!`);
 
-                const { error } = await supabase.from('solicitudes').insert(cleanItems);
-                if (error) throw error;
-            }
-
-            alert("¡Junta finalizada con éxito! Las órdenes de ejecución han sido generadas.");
             // Refresh
             setAgendaItems([]);
             setNewItems([]);
             fetchAgenda();
 
         } catch (error) {
-            console.error("Error finalizing meeting:", error);
-            alert("Hubo un error al guardar el acta. Revisa la consola.");
+            console.error("Error saving meeting:", error);
+            alert("Error al guardar el acta: " + error.message);
         } finally {
             setProcessing(false);
         }
@@ -137,15 +144,26 @@ export default function MeetingMinutes() {
                         {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                 </div>
-                <button
-                    onClick={finalizeMeeting}
-                    disabled={processing}
-                    className="btn btn-primary"
-                    style={{ backgroundColor: processing ? 'var(--text-secondary)' : 'var(--color-primary)' }}
-                >
-                    <Save size={20} style={{ marginRight: '0.5rem' }} />
-                    {processing ? 'Guardando...' : 'Cerrar Acta y Generar Órdenes'}
-                </button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                        onClick={() => saveMeeting('borrador')}
+                        disabled={processing}
+                        className="btn"
+                        style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-light)', color: 'var(--text-main)' }}
+                    >
+                        <Save size={20} style={{ marginRight: '0.5rem' }} />
+                        Guardar Borrador
+                    </button>
+                    <button
+                        onClick={() => saveMeeting('cerrada')}
+                        disabled={processing}
+                        className="btn btn-primary"
+                        style={{ backgroundColor: processing ? 'var(--text-secondary)' : 'var(--color-primary)' }}
+                    >
+                        <Check size={20} style={{ marginRight: '0.5rem' }} />
+                        {processing ? 'Procesando...' : 'Cerrar Acta'}
+                    </button>
+                </div>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>

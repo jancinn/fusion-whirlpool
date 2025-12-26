@@ -22,21 +22,19 @@ export default function Approvals() {
         setLoading(true);
         setErrorMsg(null);
         try {
-            // DEBUG: Fetch ALL requests to see if insertion worked
+            // OPTIMIZED: Fetch only relevant requests directly from DB
             const { data, error } = await supabase
                 .from('solicitudes')
                 .select('*')
-                .order('created_at', { ascending: false }); // Show newest first
+                .in('status', ['pendiente', 'avalado']) // Server-side filtering
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
 
             console.log("DEBUG: Fetched requests:", data);
 
-            // Filter manually in JS for now to debug status issues
-            const filteredData = data.filter(r => r.status === 'pendiente' || r.status === 'avalado');
-
-            // Sort locally
-            const sortedData = filteredData.sort((a, b) => {
+            // Sort locally (Avalados first)
+            const sortedData = (data || []).sort((a, b) => {
                 if (a.status === 'avalado' && b.status !== 'avalado') return -1;
                 if (a.status !== 'avalado' && b.status === 'avalado') return 1;
                 return 0;

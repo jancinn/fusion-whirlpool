@@ -11,7 +11,7 @@ export default function MinutesGenerator() {
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'detail'
 
     const userRole = user?.user_metadata?.role || '';
-    const isCoordGeneral = userRole === 'coordinador_general' || userRole === 'admin';
+    const isCoordGeneral = userRole === 'coordinador_operativo' || userRole === 'administrador_general';
 
     useEffect(() => {
         fetchActas();

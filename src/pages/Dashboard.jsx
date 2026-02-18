@@ -30,9 +30,9 @@ export default function Dashboard() {
     activeUsers: 24
   };
 
-  const isAdmin = userRole === 'admin';
-  const isCoordinator = userRole === 'coordinador';
-  const isLeader = userRole === 'lider_ministerio';
+  const isAdmin = userRole === 'administrador_general';
+  const isCoordinator = userRole === 'coordinador_operativo' || userRole === 'coordinador';
+  const isLeader = userRole === 'director_ministerio';
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>

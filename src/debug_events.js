@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = 'https://sgpikecotolcxjivzfid.supabase.co';
-const supabaseAnonKey = 'sb_publishable_b1RmmePB8q3w-aNiXr1Law_huegvLQD';
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from './lib/supabase';
 
 async function checkEvents() {
     console.log('Checking events...');

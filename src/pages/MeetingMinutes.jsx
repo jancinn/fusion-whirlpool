@@ -5,10 +5,23 @@ import { FileText, Check, X, Plus, AlertTriangle, Save, Clock, Calendar } from '
 
 export default function MeetingMinutes() {
     const { user } = useAuth();
+    const userRole = user?.user_metadata?.role;
+    const isAuthorized = userRole === 'administrador_general' || userRole === 'secretaria';
+
     const [agendaItems, setAgendaItems] = useState([]);
     const [newItems, setNewItems] = useState([]); // Items "Chavo del Ocho"
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
+
+    if (!loading && !isAuthorized) {
+        return (
+            <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <AlertTriangle size={48} style={{ marginBottom: '1rem', color: '#ef4444' }} />
+                <h2>Acceso Restringido</h2>
+                <p>Este módulo es exclusivo para la Secretaría y la Administración General.</p>
+            </div>
+        );
+    }
 
     // State for the "Quick Agreement" form
     const [quickForm, setQuickForm] = useState({

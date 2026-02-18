@@ -19,14 +19,14 @@ export default function Home() {
 
     // Smart Name Detection
     const getDisplayName = () => {
-        if (!user) return 'Líder';
+        if (!user) return 'Director de Ministerio';
         const meta = user.user_metadata || {};
         if (meta.full_name) return meta.full_name.split(' ')[0];
         if (meta.first_name) return meta.first_name;
         const localUsers = JSON.parse(localStorage.getItem('inn_users_list') || '[]');
         const found = localUsers.find(u => u.email === user.email);
         if (found && found.firstName) return found.firstName;
-        return user.email?.split('@')[0] || 'Líder';
+        return user.email?.split('@')[0] || 'Director de Ministerio';
     };
 
     const userName = getDisplayName();
@@ -34,7 +34,7 @@ export default function Home() {
 
     // Get User Role
     const userRole = user?.user_metadata?.role || 'director_ministerio';
-    const isAdmin = userRole === 'admin';
+    const isAdmin = userRole === 'administrador_general';
 
     // Real Data State
     const [nextEvent, setNextEvent] = useState(null);
@@ -124,7 +124,7 @@ export default function Home() {
             icon: <AlertCircle size={24} />,
             color: "#f59e0b",
             link: "/aprobaciones",
-            roles: ['admin'],
+            roles: ['administrador_general'],
             hasNotification: pendingCount > 0 // Only show dot if > 0
         },
         nextEventKPI
@@ -133,11 +133,11 @@ export default function Home() {
     // Filter KPIs based on Role
     const kpis = allKpis.filter(kpi => {
         if (kpi.roles.includes('all')) return true;
-        return kpi.roles.includes(userRole) || (userRole === 'admin'); // Admin sees everything
+        return kpi.roles.includes(userRole) || isAdmin; // Admin sees everything
     });
 
     const announcements = [
-        { title: "Reunión de Líderes", date: "15 Dic", content: "Recordatorio: Junta mensual de planeación este sábado a las 9 AM." },
+        { title: "Reunión de Directores", date: "15 Dic", content: "Recordatorio: Junta mensual de planeación este sábado a las 9 AM." },
         { title: "Actualización de Manual", date: "12 Dic", content: "Se ha actualizado el manual de roles en el Sistema Admin. Favor de revisar." }
     ];
 

@@ -42,9 +42,8 @@ export default function Layout({ children }) {
     // For now, let's assume we can check it. If not available yet, we might need to fetch it.
     // Let's assume user object has app_metadata or user_metadata with role.
 
-    const userRole = user?.user_metadata?.role || 'director_ministerio';
-    const isAdmin = userRole === 'admin';
-    // isCoordinator now includes both Operational Coordinators and Admins
+    const userRole = user?.user_metadata?.role;
+    const isAdmin = userRole === 'administrador_general';
     const isCoordinator = userRole === 'coordinador_operativo' || userRole === 'coordinador' || isAdmin;
 
     // Check for notifications (Pending Requests)
@@ -75,21 +74,21 @@ export default function Layout({ children }) {
 
     const menuItems = [
         { name: 'Inicio', path: '/', icon: <Home size={20} />, roles: ['all'] },
-        { name: 'Nueva Propuesta', path: '/propuestas', icon: <PlusCircle size={20} />, roles: ['admin', 'coordinador', 'coordinador_operativo', 'director_ministerio', 'staff'] },
+        { name: 'Nueva Propuesta', path: '/propuestas', icon: <PlusCircle size={20} />, roles: ['administrador_general', 'coordinador', 'coordinador_operativo', 'director_ministerio', 'staff'] },
         {
             name: 'Agenda / Aprobaciones',
             path: '/aprobaciones',
             icon: <CheckSquare size={20} />,
-            roles: ['admin', 'coordinador', 'coordinador_operativo'], // Coordinators and Admins see approvals
+            roles: ['administrador_general', 'coordinador', 'coordinador_operativo'],
             hasNotification: pendingCount > 0
         },
-        { name: 'Tablero Ejecución', path: '/todo', icon: <ClipboardList size={20} />, roles: ['admin', 'coordinador_operativo', 'staff'] },
-        { name: 'Archivo Digital', path: '/documentos', icon: <Folder size={20} />, roles: ['admin', 'secretaria'] },
-        { name: 'Generador de Actas', path: '/actas', icon: <FileText size={20} />, roles: ['admin', 'secretaria'] },
-        { name: 'Comunicación', path: '/comunicacion', icon: <MessageSquare size={20} />, roles: ['all'], hasNotification: false }, // Keep false for now until connected
+        { name: 'Tablero Ejecución', path: '/todo', icon: <ClipboardList size={20} />, roles: ['administrador_general', 'coordinador_operativo', 'staff'] },
+        { name: 'Archivo Digital', path: '/documentos', icon: <Folder size={20} />, roles: ['administrador_general', 'secretaria'] },
+        { name: 'Generador de Actas', path: '/actas', icon: <FileText size={20} />, roles: ['administrador_general', 'secretaria'] },
+        { name: 'Comunicación', path: '/comunicacion', icon: <MessageSquare size={20} />, roles: ['all'], hasNotification: false },
         { name: 'Calendario', path: '/calendario', icon: <Calendar size={20} />, roles: ['all'] },
-        { name: 'Usuarios', path: '/registro-usuarios', icon: <Users size={20} />, roles: ['admin'] },
-        { name: 'Sistema Admin', path: '/sistema', icon: <Settings size={20} />, roles: ['admin'] },
+        { name: 'Gestión de Usuarios', path: '/registro-usuarios', icon: <Users size={20} />, roles: ['administrador_general'] },
+        { name: 'Sistema Admin', path: '/sistema', icon: <Settings size={20} />, roles: ['administrador_general'] },
     ];
 
     const filteredMenuItems = menuItems.filter(item => {
@@ -162,12 +161,12 @@ export default function Layout({ children }) {
                     }}>
                         {user?.email?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <div style={{ overflow: 'hidden' }}>
-                        <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
                             {user?.email?.split('@')[0] || 'Usuario'}
                         </p>
-                        <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.7, textTransform: 'capitalize' }}>
-                            {userRole.replace('_', ' ')}
+                        <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.7, textTransform: 'capitalize', lineHeight: '1.2' }}>
+                            {(userRole || 'Usuario').replace('_', ' ')}
                         </p>
                     </div>
                 </div>

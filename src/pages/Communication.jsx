@@ -17,22 +17,21 @@ export default function Communication() {
     const [sendSuccess, setSendSuccess] = useState('');
 
     const userRole = user?.user_metadata?.role || 'peticionario';
-    const isAdmin = userRole === 'admin';
+    const isAdmin = userRole === 'administrador_general';
 
     useEffect(() => {
-        if (activeTab === 'compose') {
-            fetchUsers();
-        } else {
-            fetchMessages();
-        }
+        fetchUsers(); // Always fetch directory
+        fetchMessages();
     }, [activeTab]);
 
     const fetchUsers = async () => {
-        // In a real app, we'd fetch from a 'profiles' table. 
-        // For now, we might not have a list of all users accessible easily without a dedicated table.
-        // I'll mock some users or try to fetch from auth if possible (usually not possible client-side).
-        // Let's assume we have a 'profiles' table or similar, or just hardcode roles for now.
-        // Better: Allow sending to "Roles" (e.g., "To: Coordinators").
+        try {
+            const { data, error } = await supabase.rpc('get_directory');
+            if (error) throw error;
+            setUsers(data || []);
+        } catch (error) {
+            console.error("Error fetching directory:", error);
+        }
     };
 
     const fetchMessages = async () => {
@@ -40,7 +39,11 @@ export default function Communication() {
         try {
             let query = supabase
                 .from('messages')
-                .select('*, sender:sender_id(email), recipient:recipient_id(email)')
+                .select(`
+                    *,
+                    sender:sender_id(email),
+                    recipient:recipient_id(email)
+                `)
                 .order('created_at', { ascending: false });
 
             if (activeTab === 'inbox') {
@@ -48,26 +51,16 @@ export default function Communication() {
             } else if (activeTab === 'sent') {
                 query = query.eq('sender_id', user.id);
             } else if (activeTab === 'monitor' && isAdmin) {
-                // Admin sees ALL messages
-                // No filter needed, just fetch all
+                // Admin sees ALL messages via RLS policy
             }
 
-            // Note: Since we don't have the 'messages' table yet, this will fail. 
-            // I will handle the error gracefully or mock data for the UI demo.
             const { data, error } = await query;
 
-            if (error) {
-                // If table doesn't exist, use mock data for demo
-                console.warn("Table messages might not exist yet, using mock data");
-                setMessages([
-                    { id: 1, sender: { email: 'lider@iglesia.com' }, recipient: { email: 'admin@iglesia.com' }, subject: 'Duda sobre presupuesto', content: 'Hola, quería consultar...', created_at: new Date().toISOString() },
-                    { id: 2, sender: { email: 'tesorero@iglesia.com' }, recipient: { email: 'lider@iglesia.com' }, subject: 'Re: Facturas', content: 'Por favor envía los recibos.', created_at: new Date(Date.now() - 86400000).toISOString() }
-                ]);
-            } else {
-                setMessages(data || []);
-            }
+            if (error) throw error;
+            setMessages(data || []);
         } catch (error) {
             console.error("Error fetching messages:", error);
+            setMessages([]);
         } finally {
             setLoading(false);
         }
@@ -75,12 +68,32 @@ export default function Communication() {
 
     const handleSend = async (e) => {
         e.preventDefault();
-        // Logic to insert message into Supabase
-        // await supabase.from('messages').insert(...)
-        setSendSuccess('Mensaje enviado (Simulación)');
-        setTimeout(() => setSendSuccess(''), 3000);
-        setSubject('');
-        setContent('');
+
+        try {
+            if (!recipient) {
+                alert('Por favor selecciona un destinatario.');
+                return;
+            }
+
+            const { error } = await supabase.from('messages').insert({
+                sender_id: user.id,
+                recipient_id: recipient, // Now this is a UUID from the dropdown
+                subject: subject,
+                body: content
+            });
+
+            if (error) throw error;
+
+            setSendSuccess('Mensaje enviado correctamente.');
+            setTimeout(() => setSendSuccess(''), 3000);
+            setSubject('');
+            setContent('');
+            setRecipient('');
+            if (activeTab === 'sent') fetchMessages();
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert('Error al enviar: ' + error.message);
+        }
     };
 
     return (
@@ -169,10 +182,11 @@ export default function Communication() {
                                         style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-body)', border: '1px solid var(--border-light)', color: 'var(--text-main)' }}
                                     >
                                         <option value="">Seleccionar Destinatario...</option>
-                                        <option value="admin">Administrador General</option>
-                                        <option value="coordinadores">Todos los Coordinadores</option>
-                                        <option value="tesoreria">Tesorería</option>
-                                        <option value="secretaria">Secretaría</option>
+                                        {users.map(u => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.first_name} {u.last_name} ({u.role})
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -234,7 +248,7 @@ export default function Communication() {
                                             </div>
                                             <div style={{ fontWeight: '500', color: 'var(--text-main)', marginBottom: '0.25rem' }}>{msg.subject}</div>
                                             <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                {msg.content}
+                                                {msg.body}
                                             </div>
                                         </div>
                                     ))}

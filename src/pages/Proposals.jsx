@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { FileText, Briefcase, PenTool, Layout, Calendar, ArrowRight, Shield } from 'lucide-react';
+import SuggestionsInbox from './SuggestionsInbox';
 
 export default function Proposals() {
     const { user } = useAuth(); // Hook moved to top
-    const userRole = user?.user_metadata?.role || 'lider_ministerio';
-    const isDirector = userRole === 'lider_ministerio';
+    const userRole = user?.user_metadata?.role || 'director_ministerio';
+    const isDirector = userRole === 'director_ministerio';
 
     const [formData, setFormData] = useState({
         title: '',
@@ -52,13 +53,12 @@ export default function Proposals() {
         setMessage({ type: '', text: '' });
 
         try {
-            // Insert into 'propuestas' table (we will create this table or reuse solicitudes with new fields)
-            // For now, let's reuse 'solicitudes' but map fields differently or create a new table structure mentally.
-            // Ideally, we should create a new table 'propuestas'.
-            // Let's assume we use 'solicitudes' for now but with 'type' = 'propuesta'.
-
             let descriptionPayload = '';
-            let statusPayload = 'propuesta';
+            // LOGIC: Directors create 'sugerencia', Coordinators create 'propuesta'
+            const isSuggestion = isDirector;
+            const tipoPayload = isSuggestion ? 'sugerencia' : 'propuesta';
+            const statusPayload = isSuggestion ? 'pendiente_de_revision' : (formData.area === 'operaciones' ? 'ejecucion' : 'pendiente');
+
             let resourcesPayload = {
                 ministerial_level: formData.ministerialLevel,
                 target_audience: formData.target_audience,
@@ -67,7 +67,9 @@ export default function Proposals() {
 
             if (formData.area === 'operaciones') {
                 descriptionPayload = `ORDEN DE EJECUCIÓN: ${formData.proposal_text}\n\nFECHA EJECUCIÓN: ${formData.execution_date}\n\nACORDADO EN JUNTA: ${formData.meeting_date}`;
-                statusPayload = 'ejecucion'; // Special status for execution orders
+                // Execution orders are special, usually from Coordinators. 
+                // If a Director tries this, it should probably be a suggestion for an order? 
+                // For now, we keep the blocking logic in the UI for direct execution orders.
                 resourcesPayload = {
                     ...resourcesPayload,
                     execution_date: formData.execution_date,
@@ -76,41 +78,56 @@ export default function Proposals() {
                     signed_approval: formData.check_approval
                 };
             } else {
-                descriptionPayload = `PROPUESTA: ${formData.proposal_text}\n\nJUSTIFICACIÓN: ${formData.justification_text}\n\nREQUERIMIENTOS: ${formData.requirements}`;
+                descriptionPayload = `${isSuggestion ? 'SUGERENCIA' : 'PROPUESTA'}: ${formData.proposal_text}\n\nJUSTIFICACIÓN: ${formData.justification_text}\n\nREQUERIMIENTOS: ${formData.requirements}`;
             }
 
             // Ensure date is valid or fallback to today
             const finalEventDate = formData.execution_date || new Date().toISOString().split('T')[0];
 
             const payload = {
-                user_id: user.id, // Ensure user_id is sent
+                user_id: user.id,
                 area: formData.area,
                 activity_type: formData.title,
                 description: descriptionPayload,
-                status: statusPayload === 'ejecucion' ? 'avalado' : 'pendiente',
+                status: statusPayload === 'ejecucion' ? 'avalado' : statusPayload,
                 event_date: finalEventDate,
                 event_time: '09:00',
                 attendees: 0,
-                resources: resourcesPayload
+                resources: resourcesPayload,
+                // NEW FIELDS
+                tipo: tipoPayload,
+                sugerida_por: isSuggestion ? user.id : null,
+                responsable_oficial: isSuggestion ? null : user.id, // Coordinators take responsibility immediately
+                // dirigida_a: We might need to select a coordinator, for now leaving null or handling in backend triggers if needed.
             };
 
-            // DEBUG: Show what we are sending
-            alert("Intentando enviar: " + JSON.stringify(payload, null, 2));
+            // console.log("Intentando enviar:", payload);
 
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('solicitudes')
-                .insert([payload]);
+                .insert([payload])
+                .select();
 
             if (error) throw error;
 
-            setMessage({ type: 'success', text: 'Propuesta enviada correctamente.' });
+            console.log("Propuesta enviada:", data);
+            setMessage({ type: 'success', text: isSuggestion ? 'Sugerencia enviada a su Coordinador.' : 'Propuesta Oficial enviada correctamente.' });
+
             // Reset form logic...
-            setFormData({ ...formData, title: '', proposal_text: '', justification_text: '', requirements: '' });
+            setFormData({
+                ...formData,
+                title: '',
+                proposal_text: '',
+                justification_text: '',
+                requirements: '',
+                execution_date: '',
+                meeting_date: '',
+                check_meeting: false,
+                check_approval: false
+            });
 
         } catch (error) {
             console.error('Error submitting proposal:', error);
-            // Show detailed error
-            alert(`Error técnico: ${error.message || error.details || JSON.stringify(error)}`);
             setMessage({ type: 'error', text: `Error: ${error.message}` });
         } finally {
             setLoading(false);
@@ -120,9 +137,13 @@ export default function Proposals() {
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '2rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>Nueva Propuesta</h1>
+                <h1 style={{ fontSize: '2rem', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                    {isDirector ? 'Nueva Sugerencia' : 'Nueva Propuesta Oficial'}
+                </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>
-                    Ingresa un punto para discutir en la próxima Junta de Coordinación.
+                    {isDirector
+                        ? 'Envía una sugerencia a tu Coordinador para su revisión.'
+                        : 'Ingresa una propuesta formal para la próxima Junta de Coordinación.'}
                 </p>
             </div>
 
@@ -403,12 +424,19 @@ export default function Proposals() {
                         disabled={loading}
                         style={{ marginTop: '1rem', padding: '1rem' }}
                     >
-                        {loading ? 'Enviando...' : (isDirector ? 'Enviar a Coordinación' : 'Enviar a Coordinador General')}
+                        {loading ? 'Enviando...' : (isDirector ? 'Enviar Sugerencia a Coordinación' : 'Enviar Propuesta Oficial')}
                         <ArrowRight size={20} style={{ marginLeft: '0.5rem' }} />
                     </button>
 
                 </form >
             </div >
+
+            {/* Suggestions Inbox for Coordinators */}
+            {!isDirector && (
+                <div className="animate-fade-in">
+                    <SuggestionsInbox />
+                </div>
+            )}
         </div >
     );
 }

@@ -9,7 +9,7 @@ export default function Approvals() {
     const [loading, setLoading] = useState(true);
 
     const userRole = user?.user_metadata?.role || 'director_ministerio';
-    const isAdmin = userRole === 'admin';
+    const isAdmin = userRole === 'administrador_general';
     const isCoordinator = userRole === 'coordinador_operativo' || userRole === 'coordinador' || isAdmin;
 
     const [errorMsg, setErrorMsg] = useState(null);
@@ -27,6 +27,7 @@ export default function Approvals() {
                 .from('solicitudes')
                 .select('*')
                 .in('status', ['pendiente', 'avalado']) // Server-side filtering
+                .eq('tipo', 'propuesta') // ONLY show formal proposals, not suggestions
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

@@ -18,7 +18,7 @@ ON solicitudes FOR SELECT TO authenticated
 USING (
   (auth.uid() = user_id)
   OR ((auth.jwt() -> 'user_metadata' ->> 'role')
-      IN ('admin','coordinador','coordinador_operativo'))
+      IN ('admin', 'administrador_general', 'coordinador', 'coordinador_operativo'))
 );
 
 -- 3. UPDATE — solo Admin / Coordinador / Coordinador Operativo pueden editar
@@ -26,9 +26,9 @@ CREATE POLICY "Politica de Edicion de Solicitudes"
 ON solicitudes FOR UPDATE TO authenticated
 USING (
   (auth.jwt() -> 'user_metadata' ->> 'role')
-  IN ('admin','coordinador','coordinador_operativo')
+  IN ('admin', 'administrador_general', 'coordinador', 'coordinador_operativo')
 )
 WITH CHECK (
   (auth.jwt() -> 'user_metadata' ->> 'role')
-  IN ('admin','coordinador','coordinador_operativo')
+  IN ('admin', 'administrador_general', 'coordinador', 'coordinador_operativo')
 );

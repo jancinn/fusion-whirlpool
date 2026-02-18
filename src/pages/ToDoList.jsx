@@ -295,8 +295,8 @@ const TaskCard = ({ task, fetchTasks, updateTaskStatus }) => {
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                {/* PLANNING PHASE (Status: aprobado) */}
-                {task.status === 'aprobado' && (
+                {/* PLANNING PHASE (Status: aprobado or ejecucion) */}
+                {(task.status === 'aprobado' || task.status === 'ejecucion') && (
                     <button
                         onClick={() => setIsPlanning(true)}
                         style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem', backgroundColor: 'var(--color-primary)', border: 'none', color: 'white', borderRadius: 'var(--radius-md)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
@@ -377,11 +377,12 @@ export default function ToDoList() {
 
     const fetchTasks = async () => {
         try {
-            // Fetch items with status 'aprobado' (Approved Proposals ready for execution), 'ejecucion', or 'in_progress'
+            // Fetch items with status 'ejecucion' (Pending Execution), 'en_proceso', or 'terminado'
+            // 'aprobado' is excluded because the trigger now creates a separate 'ejecucion' record for them.
             const { data, error } = await supabase
                 .from('solicitudes')
                 .select('*')
-                .in('status', ['aprobado', 'ejecucion', 'en_proceso', 'terminado'])
+                .in('status', ['ejecucion', 'en_proceso', 'terminado'])
                 .order('event_date', { ascending: true });
 
             if (error) throw error;
@@ -409,7 +410,6 @@ export default function ToDoList() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'aprobado': return 'var(--color-accent)'; // Ready to start
             case 'ejecucion': return 'var(--color-accent)';
             case 'en_proceso': return 'var(--color-primary)';
             case 'terminado': return '#22c55e';
@@ -419,7 +419,6 @@ export default function ToDoList() {
 
     const getStatusLabel = (status) => {
         switch (status) {
-            case 'aprobado': return 'Por Iniciar';
             case 'ejecucion': return 'Pendiente';
             case 'en_proceso': return 'En Proceso';
             case 'terminado': return 'Terminado';
@@ -474,7 +473,7 @@ export default function ToDoList() {
                                 title="Pendiente"
                                 subtitle="Junta de Operaciones: Definir Logística"
                                 status="ejecucion"
-                                items={tasks.filter(t => t.status === 'ejecucion' || t.status === 'aprobado')}
+                                items={tasks.filter(t => t.status === 'ejecucion')}
                                 icon={<AlertCircle size={20} color="var(--color-accent)" />}
                                 fetchTasks={fetchTasks}
                                 updateTaskStatus={updateTaskStatus}
